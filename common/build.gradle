@@ -29,7 +29,7 @@ publishing {
             url "https://sg.storage.bunnycdn.com/skyeven"
             credentials(HttpHeaderCredentials) {
                 name = "AccessKey"
-                value = property("skyevenToken")
+                value = findProperty("skyevenToken") ?: ""
             }
             authentication {
                 header(HttpHeaderAuthentication)
