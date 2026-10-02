@@ -14,6 +14,11 @@ public class Config extends ReflectiveConfig {
     public final TrackedValue<String> relayHost = this.value("test.e4mc.link");
     public final TrackedValue<Integer> relayPort = this.value(25575);
 
+    @Comment("Optional custom Minecraft hostname to request from a compatible self-hosted QUIClime relay. Leave blank for normal random domain assignment.")
+    public final TrackedValue<String> customDomain = this.value("");
+    @Comment("Shared secret used to authorize custom-domain claims on a compatible relay. Leave blank when customDomain is blank.")
+    public final TrackedValue<String> customDomainToken = this.value("");
+
     @Comment("Allows use of certain dedicated server commands such as /ban and /whitelist")
     public final TrackedValue<Boolean> restoreDedicatedCommands = this.value(true);
     @Comment("Whether to use whitelists on LAN worlds")
