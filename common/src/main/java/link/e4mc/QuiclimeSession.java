@@ -57,7 +57,17 @@ public class QuiclimeSession {
 
         public static class RequestDomainAssignmentMessageServerbound implements ControlMessage {
             String kind = "request_domain_assignment";
-            public RequestDomainAssignmentMessageServerbound() {}
+            String requested_domain;
+            String token;
+
+            public RequestDomainAssignmentMessageServerbound(String requestedDomain, String token) {
+                if (requestedDomain != null && !requestedDomain.isBlank()) {
+                    this.requested_domain = requestedDomain.trim();
+                    if (token != null && !token.isBlank()) {
+                        this.token = token;
+                    }
+                }
+            }
         }
 
         public static class DialtoneRegisterTicketMessageServerbound implements ControlMessage {
@@ -73,6 +83,15 @@ public class QuiclimeSession {
             String domain;
             public DomainAssignmentCompleteMessageClientbound(String domain) {
                 this.domain = domain;
+            }
+        }
+
+        public static class DomainAssignmentRejectedMessageClientbound implements ControlMessage {
+            String kind = "domain_assignment_rejected";
+            String reason;
+
+            public DomainAssignmentRejectedMessageClientbound(String reason) {
+                this.reason = reason;
             }
         }
 
@@ -128,6 +147,9 @@ public class QuiclimeSession {
                 switch (json.get("kind").getAsString()) {
                     case "domain_assignment_complete":
                         out.add(gson.fromJson(json, DomainAssignmentCompleteMessageClientbound.class));
+                        break;
+                    case "domain_assignment_rejected":
+                        out.add(gson.fromJson(json, DomainAssignmentRejectedMessageClientbound.class));
                         break;
                     case "request_message_broadcast":
                         out.add(gson.fromJson(json, RequestMessageBroadcastMessageClientbound.class));
@@ -324,6 +346,19 @@ public class QuiclimeSession {
                                             }
                                         }
                                     }
+                                    if (msg instanceof ControlMessageCodec.DomainAssignmentRejectedMessageClientbound rejected) {
+                                        String reason = rejected.reason == null ? "unspecified reason" : rejected.reason;
+                                        RuntimeException error = new RuntimeException("Domain assignment rejected: " + reason);
+                                        state = State.UNHEALTHY;
+                                        failureCause = error;
+                                        LOGGER.error("domain assignment rejected: {}", reason);
+                                        if (Agnos.isClient()) {
+                                            Minecraft.getInstance().execute(() -> Minecraft.getInstance().gui.getChat().addMessage(
+                                                    Mirror.literal("e4mc domain assignment rejected: " + reason)
+                                            ));
+                                        }
+                                        ctx.close();
+                                    }
                                     if (msg instanceof ControlMessageCodec.RequestMessageBroadcastMessageClientbound) {
                                         if (Agnos.isClient()) {
                                             Minecraft.getInstance().execute(() -> Minecraft.getInstance().gui.getChat().addMessage(Mirror.literal(((ControlMessageCodec.RequestMessageBroadcastMessageClientbound) msg).message)));
@@ -382,8 +417,13 @@ public class QuiclimeSession {
                         streamChannel
                                 .writeAndFlush(new ControlMessageCodec.ProbeCapabilitiesMessageServerbound())
                                 .addListener(ignored -> LOGGER.info("probing capabilities"));
+                        String customDomain = Config.INSTANCE.customDomain.value().trim();
+                        String customDomainToken = Config.INSTANCE.customDomainToken.value();
+                        if (!customDomain.isEmpty()) {
+                            LOGGER.info("requesting custom domain: {}", customDomain);
+                        }
                         streamChannel
-                                .writeAndFlush(new ControlMessageCodec.RequestDomainAssignmentMessageServerbound())
+                                .writeAndFlush(new ControlMessageCodec.RequestDomainAssignmentMessageServerbound(customDomain, customDomainToken))
                                 .addListener(ignored -> LOGGER.info("control channel write complete"));
                         quicChannel.closeFuture().addListener(ignored -> datagramChannel.close());
                     });
