@@ -6,6 +6,14 @@
 
 Open a LAN server to anyone, anywhere, anytime.
 
+## Custom-domain fork
+
+The `custom-domain-6.0.6` branch extends e4mc 6.0.6 with authenticated custom-domain requests for a compatible QUIClime relay.
+
+Set `useBroker = false`, point `relayHost` and `relayPort` at the self-hosted relay, then set `customDomain` and `customDomainToken` in the generated e4mc configuration. Leave `customDomain` blank to keep the normal random-domain behavior.
+
+The relay must run the matching custom-domain fork and be configured to allow the requested hostname. The shared token is only sent over the QUIC control connection and is never intended to be exposed to Minecraft players.
+
 ## Install
 
 [Modrinth](https://modrinth.com/project/qANg5Jrr)
