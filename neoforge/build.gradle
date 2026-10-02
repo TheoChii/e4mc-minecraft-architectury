@@ -80,7 +80,7 @@ publishing {
             url "https://sg.storage.bunnycdn.com/skyeven"
             credentials(HttpHeaderCredentials) {
                 name = "AccessKey"
-                value = property("skyevenToken")
+                value = findProperty("skyevenToken") ?: ""
             }
             authentication {
                 header(HttpHeaderAuthentication)
@@ -100,7 +100,7 @@ publishMods {
 
     // Uncomment your desired platform(s)
     curseforge {
-        accessToken = project.curseforgeApiToken
+        accessToken = project.findProperty("curseforgeApiToken") ?: ""
         projectId = project.curseforgeId
         minecraftVersions.addAll(
                 "1.20.2", "1.20.3", "1.20.4", "1.20.5", "1.20.6",
@@ -113,7 +113,7 @@ publishMods {
     }
 
     modrinth {
-        accessToken = project.modrinthApiToken
+        accessToken = project.findProperty("modrinthApiToken") ?: ""
         projectId = project.modrinthId
         additionalFiles.from(sourcesJar.archiveFile)
         minecraftVersions.addAll(
